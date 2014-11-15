@@ -14,19 +14,43 @@
   </style>
 </head>
 <body>
-	<h1>Hola supermercado</h1>
-	<script>
-		var ws = new WebSocket('ws://10.0.2.86:8322');
+  <h1>Hola supermercado</h1>
+  <script>
+    if ('requestWakeLock' in navigator) {
+      var lock = navigator.requestWakeLock('screen');
+      window.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+          lock.unlock();
+        }
+        else {
+          lock = navigator.requestWakeLock('screen');
+        }
+      });
+    }
 
-	  window.addEventListener('deviceorientation', function(e) {
-	  	if (ws.readyState == ws.OPEN) {
-	  		ws.send(JSON.stringify({
-	  			alpha: e.alpha,
-	  			beta: e.beta,
-	  			gamma: e.gamma
-	  		}));
-	  	}
-	  });
-	</script>
+    var ws = new WebSocket('ws://10.0.2.86:8322');
+
+    window.addEventListener('deviceorientation', function(e) {
+      if (ws.readyState == ws.OPEN) {
+        ws.send(JSON.stringify({
+          type: 'deviceorientation',
+          alpha: e.alpha,
+          beta: e.beta,
+          gamma: e.gamma
+        }));
+      }
+    });
+
+    window.addEventListener('devicemotion', function(e) {
+      if (ws.readyState == ws.OPEN) {
+        ws.send(JSON.stringify({
+          type: 'devicemotion',
+          x: e.accelerationIncludingGravity.x,
+          y: e.accelerationIncludingGravity.y,
+          z: e.accelerationIncludingGravity.z
+        }));
+      }
+    });
+  </script>
 </body>
 </html>
