@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Show the mothafocka</title>
+  <title>DeviceMotion Multi</title>
   <script src="jquery.js"></script>
   <script src="chart.js"></script>
   <style>
@@ -37,7 +37,6 @@
   <script>
     var container = document.getElementById('container');
 
-    var serie;
     var chart;
 
     $(document).ready(function () {
@@ -60,11 +59,12 @@
           }
         },
         chart: {
-          type: 'line', animation: false, // don't animate in old IE
-          marginRight: 10, events: {
+          type: 'line',
+          animation: false,
+          marginRight: 10,
+          events: {
             load: function () {
               chart = this;
-              serie=this.series[0];
             }
           }
         }
@@ -101,18 +101,15 @@
         exporting: {
           enabled: false
         }
-        ,
-        series:[ {
-          name: 'First', data: []
-        }
-        ]
       }
       );
     }
     );
 
+    var gotEventInLast500ms = false;
+    var _geilTimer = null;
 
-    var firstEventFromDevice = null;
+    var devices = {};
 
     var ws = new WebSocket('ws://localhost:8322');
     ws.onmessage = function(e) {
@@ -120,23 +117,45 @@
       if (typeof data === 'string') data = JSON.parse(data);
 
       if (data && data.type === 'devicemotion') {
-        if (firstEventFromDevice === null) {
-          firstEventFromDevice = data.timestamp;
+        if (!devices[data.deviceId]) {
+          var serie = chart.addSeries({
+            name: 'Another one',
+            data: []
+          });
+          devices[data.deviceId] = {
+            firstEventFromDevice: data.timestamp,
+            firstEventOnServer: Date.now(),
+            serie: serie,
+            offset: 0
+          };
+          serie.device = devices[data.deviceId];
+
+          if (gotEventInLast500ms) {
+            // we need to sync this thing up with the other chart. We use series[0] as a basic
+            devices[data.deviceId].offset = Date.now() - chart.series[0].device.firstEventOnServer;
+          }
         }
 
-        serie.addPoint([ data.timestamp - firstEventFromDevice, Math.abs(data.z) ], true, false);
+        gotEventInLast500ms = true;
+        clearTimeout(_geilTimer);
+        _geilTimer = setTimeout(function() {
+          console.log('Didnt get event in last 500ms');
+          gotEventInLast500ms = false;
+        }, 500);
+
+        var dev = devices[data.deviceId];
+        dev.serie.addPoint([ dev.offset + data.timestamp - dev.firstEventFromDevice,
+                           Math.abs(data.z)],
+                           true,
+                           false);
       }
     };
 
     document.querySelector('#new-series').onclick = function() {
-      serie = chart.addSeries({
-        name: 'Another one',
-        data: []
-      });
-      firstEventFromDevice = null;
+      devices = {};
     };
     document.querySelector('#remove').onclick = function() {
-      serie.remove();
+      chart.series[chart.series.length - 1].remove();
       document.querySelector('#new-series').onclick();
     };
   </script>

@@ -16,7 +16,7 @@
 <body>
   <h1 style="font-size: 60px">Device Motion</h1>
   <button style="width: 50vw; height: 10vw">
-    Click me
+    Hold me
   </button>
   <script>
     if ('requestWakeLock' in navigator) {
@@ -30,6 +30,8 @@
         }
       });
     }
+    
+    var counter = 0; // gets upped every time we activate the sensor
 
     var ws = new WebSocket('ws://10.0.2.86:8322');
 
@@ -59,6 +61,7 @@
         ws.send(JSON.stringify({
           type: 'devicemotion',
           timestamp: Date.now(),
+          deviceId: location.origin + counter,
           x: e.accelerationIncludingGravity.x,
           y: e.accelerationIncludingGravity.y,
           z: e.accelerationIncludingGravity.z
@@ -68,6 +71,7 @@
 
     var active = false;
     document.querySelector('button').oncontextmenu = function() {
+      counter++;
       if (active) {
         window.removeEventListener('devicemotion', odm);
       }
