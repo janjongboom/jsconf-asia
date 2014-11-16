@@ -1,0 +1,9 @@
+{
+  "name": "DeviceMotion",
+  "developer": {
+    "name": "Jan Jongboom",
+    "url": "http://janjongboom.com"
+  },
+  "description": "Orientate me!",
+  "launch_path": "/index.html"
+}

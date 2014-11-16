@@ -40,6 +40,10 @@
         beta = data.beta;
         gamma = data.gamma;
       }
+
+      if (data && data.type === 'devicemotion') {
+        console.log(data.sinceLast, data.z);
+      }
     };
 
     var scene = new THREE.Scene();
@@ -74,12 +78,14 @@
 
     var geometry = new THREE.BoxGeometry(2, 4, 0.6);
     var cube = new THREE.Mesh(geometry, new THREE.MeshFaceMaterial(materials));
+
     scene.add(cube);
     camera.position.z = 5;
     camera.updateProjectionMatrix();
     var render = function() {
-      cube.rotation.x = beta / 60;
-      cube.rotation.y = gamma / 60;
+      cube.rotation.x = (beta / 60);
+      cube.rotation.y = (gamma / 60);
+      // cube.rotation.z = (alpha / 60) - 5.16;
 
       requestAnimationFrame(render);
       renderer.render(scene, camera);

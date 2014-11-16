@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Show the mothafocka</title>
+  <style>
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <h1 style="font-size: 60px">Device Motion</h1>
+  <button style="width: 50vw; height: 10vw">
+    Click me
+  </button>
+  <script>
+    if ('requestWakeLock' in navigator) {
+      var lock = navigator.requestWakeLock('screen');
+      window.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+          lock.unlock();
+        }
+        else {
+          lock = navigator.requestWakeLock('screen');
+        }
+      });
+    }
+
+    var ws = new WebSocket('ws://10.0.2.86:8322');
+
+    var odm = function(e) {
+      // Keon logic here, for some reason stable Z is 18
+      var z = Math.abs(e.accelerationIncludingGravity.z);
+
+      if (z > 10 && z < 25) {
+        // stable
+        document.body.style.backgroundColor = 'gray';
+      }
+      else if (z < 10) {
+        // free fall
+        document.body.style.backgroundColor = 'red';
+      }
+      else {
+        // goes up
+        document.body.style.backgroundColor = 'green';
+      }
+
+      document.querySelector('h1').textContent = e.accelerationIncludingGravity.z | 0;
+
+      console.log(e.accelerationIncludingGravity.z, +new Date());
+      // return;
+
+      if (ws.readyState == ws.OPEN) {
+        ws.send(JSON.stringify({
+          type: 'devicemotion',
+          timestamp: Date.now(),
+          x: e.accelerationIncludingGravity.x,
+          y: e.accelerationIncludingGravity.y,
+          z: e.accelerationIncludingGravity.z
+        }));
+      }
+    };
+
+    var active = false;
+    document.querySelector('button').oncontextmenu = function() {
+      if (active) {
+        window.removeEventListener('devicemotion', odm);
+      }
+      else {
+        window.addEventListener('devicemotion', odm);
+      }
+      active = !active;
+    };
+  </script>
+</body>
+</html>

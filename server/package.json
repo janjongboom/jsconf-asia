@@ -3,6 +3,6 @@
   "private": true,
   "dependencies": {
     "connect": "^2.27.3",
-    "ws": "^0.4.32"
+    "nodejs-websocket": "^1.1.0"
   }
 }

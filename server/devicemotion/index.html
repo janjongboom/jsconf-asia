@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Show the mothafocka</title>
+  <script src="jquery.js"></script>
+  <script src="chart.js"></script>
+  <style>
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+    }
+    canvas, #container {
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      margin: 0;
+    }
+    #actions {
+      position: absolute;
+      z-index: 99;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="actions">
+    <button id="new-series">New series</button>
+    <button id="remove">Remove last one</button>
+  </div>
+  <div id="container"></canvas>
+
+  <script>
+    var container = document.getElementById('container');
+
+    var serie;
+    var chart;
+
+    $(document).ready(function () {
+      Highcharts.setOptions( {
+        global: {
+          useUTC: false
+        }
+      }
+      );
+      $(container).highcharts( {
+        plotOptions: {
+          series: {
+            animation: false
+          },
+          spline: {
+            animation: false
+          },
+          line: {
+            animation: false
+          }
+        },
+        chart: {
+          type: 'line', animation: false, // don't animate in old IE
+          marginRight: 10, events: {
+            load: function () {
+              chart = this;
+              serie=this.series[0];
+            }
+          }
+        }
+        ,
+        title: {
+          text: 'DeviceMotion'
+        }
+        ,
+        xAxis: {
+          type: 'linear'
+        }
+        ,
+        yAxis: {
+          title: {
+            text: 'Value'
+          }
+          ,
+          plotLines:[ {
+            value: 0, width: 1, color: '#808080'
+          }
+          ],
+          min: -3,
+          max: 80
+        }
+        ,
+        tooltip: {
+          enabled: false
+        }
+        ,
+        legend: {
+          enabled: false
+        }
+        ,
+        exporting: {
+          enabled: false
+        }
+        ,
+        series:[ {
+          name: 'First', data: []
+        }
+        ]
+      }
+      );
+    }
+    );
+
+
+    var firstEventFromDevice = null;
+
+    var ws = new WebSocket('ws://localhost:8322');
+    ws.onmessage = function(e) {
+      var data = e.data;
+      if (typeof data === 'string') data = JSON.parse(data);
+
+      if (data && data.type === 'devicemotion') {
+        if (firstEventFromDevice === null) {
+          firstEventFromDevice = data.timestamp;
+        }
+
+        serie.addPoint([ data.timestamp - firstEventFromDevice, Math.abs(data.z) ], true, false);
+      }
+    };
+
+    document.querySelector('#new-series').onclick = function() {
+      serie = chart.addSeries({
+        name: 'Another one',
+        data: []
+      });
+      firstEventFromDevice = null;
+    };
+    document.querySelector('#remove').onclick = function() {
+      serie.remove();
+      document.querySelector('#new-series').onclick();
+    };
+  </script>
+</body>
+
+</html>
