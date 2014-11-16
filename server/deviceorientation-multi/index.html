@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DeviceOrientation basic</title>
+  <script src="three.js"></script>
+  <script src="trackball.js"></script>
+  <style>
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      margin: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- beta is tilt up or down,
+       gamma is tilt left or right-->
+  <script>
+    var devices = {};
+
+    var deviceCount = 0;
+    var cubes = [];
+    var cubeX = -1.5;
+
+    var ws = new WebSocket('ws://localhost:8322');
+    ws.onmessage = function(e) {
+      var data = e.data;
+      if (typeof data === 'string') data = JSON.parse(data);
+
+      if (data && data.type === 'deviceorientation') {
+
+        var newCube;
+        if (!devices[data.deviceId]) {
+          // create new element
+          newCube = ++deviceCount % 2 === 1 ?
+            createKeon('keonfront.png', 'keonback.png', 0xffe04526) :
+            createKeon('greenkeonfront.png', 'greenkeonback.png', 0xff33de2a);
+
+          newCube.deviceId = data.deviceId;
+          newCube.position.x = cubeX;
+          cubeX += 3;
+          scene.add(newCube);
+          cubes.push(newCube);
+          devices[data.deviceId] = { cube: newCube };
+        }
+
+        devices[data.deviceId].alpha = data.alpha;
+        devices[data.deviceId].beta = data.beta;
+        devices[data.deviceId].gamma = data.gamma;
+      }
+
+      if (data && data.type === 'devicemotion') {
+        devices[data.deviceId].z = data.z;
+      }
+    };
+
+    var scene = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    var renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+    var material = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      vertexColors: THREE.FaceColors
+    });
+
+    function createKeon(frontImage, backImage, sideColor) {
+      var frontPictureMaterial = new THREE.MeshBasicMaterial({
+        map: THREE.ImageUtils.loadTexture(frontImage)
+      });
+      var backPictureMaterial = new THREE.MeshBasicMaterial({
+        map: THREE.ImageUtils.loadTexture(backImage)
+      });
+
+      var borderMaterial = new THREE.MeshBasicMaterial({
+        color: sideColor
+      });
+
+      var materials = [
+        borderMaterial,
+        borderMaterial,
+        borderMaterial,
+        borderMaterial,
+        frontPictureMaterial,
+        backPictureMaterial
+      ];
+
+      var geometry = new THREE.BoxGeometry(2, 4, 0.3);
+      var cube = new THREE.Mesh(geometry, new THREE.MeshFaceMaterial(materials));
+      return cube;
+    }
+
+    // var cube1 = createKeon('keonfront.png', 'keonback.png', 0xffe04526);
+    // cube1.position.x -= 1.5;
+    // scene.add(cube1);
+
+    // var cube2 = ;
+    // cube2.position.x += 1.5;
+    // scene.add(cube2);
+
+    camera.position.z = 5;
+    camera.zoom = .2;
+    camera.updateProjectionMatrix();
+
+		var	controls = new THREE.TrackballControls( camera );
+
+		controls.rotateSpeed = 1.0;
+		controls.zoomSpeed = 1.2;
+		controls.panSpeed = 0.8;
+
+		controls.noZoom = false;
+		controls.noPan = false;
+
+		controls.staticMoving = true;
+		controls.dynamicDampingFactor = 0.3;
+
+		controls.keys = [ 65, 83, 68 ];
+
+		controls.addEventListener( 'change', render );
+
+    var render = function() {
+      Object.keys(devices).forEach(function(k) {
+        var dev = devices[k];
+        dev.cube.rotation.x = dev.beta / 60;
+        dev.cube.rotation.y = dev.gamma / 60;
+        dev.cube.position.z = (dev.z - 19) / 5; // @todo: add smoothness to this
+        // dev.cube.rotation.z = dev.alpha / 60;
+      });
+
+      requestAnimationFrame(render);
+      renderer.render(scene, camera);
+
+      controls.update();
+    };
+    render();
+  </script>
+</body>
+
+</html>

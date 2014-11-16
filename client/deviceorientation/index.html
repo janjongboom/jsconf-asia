@@ -16,6 +16,14 @@
 <body>
   <h1 style="font-size: 60px">Device Orientation</h1>
   <script>
+    function getUuid() {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+          var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+          return v.toString(16);
+      });
+    }
+    var deviceId = getUuid();
+
     if ('requestWakeLock' in navigator) {
       var lock = navigator.requestWakeLock('screen');
       window.addEventListener('visibilitychange', function() {
@@ -36,7 +44,21 @@
           type: 'deviceorientation',
           alpha: e.alpha,
           beta: e.beta,
-          gamma: e.gamma
+          gamma: e.gamma,
+          deviceId: deviceId
+        }));
+      }
+    });
+
+    window.addEventListener('devicemotion', function(e) {
+      if (ws.readyState == ws.OPEN) {
+        ws.send(JSON.stringify({
+          type: 'devicemotion',
+          timestamp: Date.now(),
+          deviceId: deviceId,
+          x: e.accelerationIncludingGravity.x,
+          y: e.accelerationIncludingGravity.y,
+          z: e.accelerationIncludingGravity.z
         }));
       }
     });
