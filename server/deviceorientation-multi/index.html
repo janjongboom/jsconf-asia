@@ -31,9 +31,8 @@
 
     var deviceCount = 0;
     var cubes = [];
-    var cubeX = -1.5;
 
-    var ws = new WebSocket('ws://localhost:8322');
+    var ws = new WebSocket('ws://' + location.hostname + ':8322');
     ws.onmessage = function(e) {
       var data = e.data;
       if (typeof data === 'string') data = JSON.parse(data);
@@ -48,20 +47,18 @@
             createKeon('greenkeonfront.png', 'greenkeonback.png', 0xff33de2a);
 
           newCube.deviceId = data.deviceId;
-          newCube.position.x = cubeX;
-          cubeX += 3;
+          newCube.position.x = !cubes.length ? -1 : cubes[cubes.length - 1].position.x + 2;
+          cubes.forEach(function(c) {
+            c.position.x -= 1;
+          })
           scene.add(newCube);
           cubes.push(newCube);
-          devices[data.deviceId] = { cube: newCube };
+          devices[data.deviceId] = { cube: newCube, vz: 0, hz: 0 };
         }
 
         devices[data.deviceId].alpha = data.alpha;
         devices[data.deviceId].beta = data.beta;
         devices[data.deviceId].gamma = data.gamma;
-      }
-
-      if (data && data.type === 'devicemotion') {
-        devices[data.deviceId].z = data.z;
       }
     };
 
@@ -110,7 +107,7 @@
     // scene.add(cube2);
 
     camera.position.z = 5;
-    camera.zoom = .2;
+    camera.zoom = 1;
     camera.updateProjectionMatrix();
 
 		var	controls = new THREE.TrackballControls( camera );
@@ -134,8 +131,7 @@
         var dev = devices[k];
         dev.cube.rotation.x = dev.beta / 60;
         dev.cube.rotation.y = dev.gamma / 60;
-        dev.cube.position.z = (dev.z - 19) / 5; // @todo: add smoothness to this
-        // dev.cube.rotation.z = dev.alpha / 60;
+        dev.cube.rotation.z = dev.alpha / 60;
       });
 
       requestAnimationFrame(render);

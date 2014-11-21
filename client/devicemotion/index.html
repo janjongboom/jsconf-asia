@@ -41,7 +41,19 @@
 
     var counter = 0; // gets upped every time we activate the sensor
 
-    var ws = new WebSocket('ws://10.0.2.86:8322');
+    var wsOpen = false;
+    var ws;
+    function connect() {
+      ws = new WebSocket('ws://10.10.0.247:8322');
+      ws.onopen = () => {
+        wsOpen = true;
+      };
+      ws.onclose = () => {
+        wsOpen = false;
+        connect();
+      };
+    }
+    connect();
 
     var odm = function(e) {
       // Keon logic here, for some reason stable Z is 18
@@ -65,7 +77,7 @@
       console.log(e.accelerationIncludingGravity.z, +new Date());
       // return;
 
-      if (ws.readyState == ws.OPEN) {
+      if (wsOpen) {
         ws.send(JSON.stringify({
           type: 'devicemotion',
           timestamp: Date.now(),

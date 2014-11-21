@@ -30,7 +30,7 @@
     var alpha = 0.5,
       beta = 0.5,
       gamma = 0.5;
-    var ws = new WebSocket('ws://localhost:8322');
+    var ws = new WebSocket('ws://' + location.hostname + ':8322');
     ws.onmessage = function(e) {
       var data = e.data;
       if (typeof data === 'string') data = JSON.parse(data);

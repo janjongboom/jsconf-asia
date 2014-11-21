@@ -32,7 +32,7 @@
     <button id="new-series">New series</button>
     <button id="remove">Remove last one</button>
   </div>
-  <div id="container"></canvas>
+  <div id="container"></div>
 
   <script>
     var container = document.getElementById('container');
@@ -74,7 +74,9 @@
         }
         ,
         xAxis: {
-          type: 'linear'
+          type: 'linear',
+          min: 0,
+          minRange: 10000
         }
         ,
         yAxis: {
@@ -111,7 +113,7 @@
 
     var devices = {};
 
-    var ws = new WebSocket('ws://localhost:8322');
+    var ws = new WebSocket('ws://' + location.hostname + ':8322');
     ws.onmessage = function(e) {
       var data = e.data;
       if (typeof data === 'string') data = JSON.parse(data);
@@ -139,9 +141,9 @@
         gotEventInLast500ms = true;
         clearTimeout(_geilTimer);
         _geilTimer = setTimeout(function() {
-          console.log('Didnt get event in last 500ms');
+          console.log('Didnt get event in last 1000ms');
           gotEventInLast500ms = false;
-        }, 500);
+        }, 1000);
 
         var dev = devices[data.deviceId];
         dev.serie.addPoint([ dev.offset + data.timestamp - dev.firstEventFromDevice,

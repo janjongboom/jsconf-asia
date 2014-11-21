@@ -1,10 +1,14 @@
 {
-  "name": "DeviceMotion",
+  "name": "Wifi",
+  "type": "certified",
   "developer": {
     "name": "Jan Jongboom",
     "url": "http://janjongboom.com"
   },
-  "description": "Orientate me!",
+  "description": "Hide and seek!",
   "launch_path": "/index.html",
+  "permissions": {
+    "wifi-manage": {}
+  },
   "fullscreen": true
 }

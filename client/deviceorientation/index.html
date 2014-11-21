@@ -36,10 +36,22 @@
       });
     }
 
-    var ws = new WebSocket('ws://10.0.2.86:8322');
+    var wsOpen = false;
+    var ws;
+    function connect() {
+      ws = new WebSocket('ws://10.10.0.247:8322');
+      ws.onopen = () => {
+        wsOpen = true;
+      };
+      ws.onclose = () => {
+        wsOpen = false;
+        connect();
+      };
+    }
+    connect();
 
     window.addEventListener('deviceorientation', function(e) {
-      if (ws.readyState == ws.OPEN) {
+      if (wsOpen) {
         ws.send(JSON.stringify({
           type: 'deviceorientation',
           alpha: e.alpha,
@@ -51,7 +63,7 @@
     });
 
     window.addEventListener('devicemotion', function(e) {
-      if (ws.readyState == ws.OPEN) {
+      if (wsOpen) {
         ws.send(JSON.stringify({
           type: 'devicemotion',
           timestamp: Date.now(),
@@ -59,6 +71,16 @@
           x: e.accelerationIncludingGravity.x,
           y: e.accelerationIncludingGravity.y,
           z: e.accelerationIncludingGravity.z
+        }));
+      }
+    });
+
+    window.addEventListener('devicelight', function(e) {
+      if (wsOpen) {
+        ws.send(JSON.stringify({
+          type: 'devicelight',
+          deviceId: deviceId,
+          value: e.value
         }));
       }
     });
